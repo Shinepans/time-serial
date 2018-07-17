@@ -4,11 +4,11 @@ Pandas - Time serial
 
 ## 目录
 
-1.时间序列分析
-2.加载和处理时间序列
-3.检验时间序列是否平稳
-4.非平稳时间序列转换为平稳时间序列
-5.时间序列预测
+- 1.时间序列分析
+- 2.加载和处理时间序列
+- 3.检验时间序列是否平稳
+- 4.非平稳时间序列转换为平稳时间序列
+- 5.时间序列预测
 
 ## Data
 
@@ -462,4 +462,178 @@ dtype: float64
 ```
 
 Dickey-Fuller检验统计量显著低于1％临界值。所以这个时间序列非常接近平稳时间序列。 
+
+## 5.对时间序列进行预测
+
+去除趋势和周期性后，可能会出现两种情况:
+
+- 一个严格平稳的时间序列，各个时刻之间没有依赖关系。这是一个简单的情况，可以将残差建模为白噪声,但这是非常罕见的。
+- 一个各个时刻存在显著依赖的时间序列。 在这种情况下，需要使用一些统计模型，如ARIMA来预测数据。
+
+ARIMA模型(Autoregressive Integrated Moving Average Model)的全称叫做自回归移动平均模型。也记作ARIMA( p,d,q )，是统计模型(statistic model)中最常见的一种用来进行时间序列预测的模型。
+
+该模型十分简单，一个平稳时间序列的ARIMA预测模型不过是一个线性方程。但是该模型只适用于于平稳序列，比如常常受政策和新闻的影响而波动的股票数据就是非平稳的，无法用ARIMA预测的。
+
+### 自相关函数 (ACF)
+
+它是时间序列与本身滞后版本之间的相关性的量度
+
+### 偏自相关函数(partial autocorrelation function，PACF)
+
+它衡量了时间序列与其自身的滞后版本之间的相关性，但已经消除已经由中间的之后版本比较解释得到的变化.
+
+差分后的时间序列ts_log_diff的ACF和PACF图可绘制为：
+
+```
+from statsmodels.tsa.stattools import acf, pacf
+lag_acf = acf(ts_log_diff, nlags=20)
+lag_pacf = pacf(ts_log_diff, nlags=20, method='ols')
+
+# ACF
+plt.subplot(121) 
+plt.plot(lag_acf)
+plt.axhline(y=0,linestyle='--',color='gray')
+plt.axhline(y=-1.96/np.sqrt(len(ts_log_diff)),linestyle='--',color='gray')
+plt.axhline(y=1.96/np.sqrt(len(ts_log_diff)),linestyle='--',color='gray')
+plt.title('Autocorrelation Function')
+
+# PACF:
+plt.subplot(122)
+plt.plot(lag_pacf)
+plt.axhline(y=0,linestyle='--',color='gray')
+plt.axhline(y=-1.96/np.sqrt(len(ts_log_diff)),linestyle='--',color='gray')
+plt.axhline(y=1.96/np.sqrt(len(ts_log_diff)),linestyle='--',color='gray')
+plt.title('Partial Autocorrelation Function')
+plt.tight_layout()
+```
+
+![img](./results/chafen-xiangguan.png)
+
+### 加载ARIMA模型
+
+```
+from statsmodels.tsa.arima_model import ARIMA
+```
+
+#### AR 模型
+
+```
+model = ARIMA(ts_log, order=(2, 1, 0))  
+results_AR = model.fit(disp=-1)  
+plt.plot(ts_log_diff)
+plt.plot(results_AR.fittedvalues, color='red')
+plt.title('RSS: %.4f'% sum((results_AR.fittedvalues-ts_log_diff)**2))
+```
+
+![img](./results/RSS-AR.png)
+
+#### MA 模型
+
+```
+model = ARIMA(ts_log, order=(0, 1, 2))  
+results_MA = model.fit(disp=-1)  
+plt.plot(ts_log_diff)
+plt.plot(results_MA.fittedvalues, color='red')
+plt.title('RSS: %.4f'% sum((results_MA.fittedvalues-ts_log_diff)**2))
+```
+
+![img](./results/RSS-MA.png)
+
+#### 组合模型
+
+```
+model = ARIMA(ts_log, order=(2, 1, 2))  
+results_ARIMA = model.fit(disp=-1)  
+plt.plot(ts_log_diff)
+plt.plot(results_ARIMA.fittedvalues, color='red')
+plt.title('RSS: %.4f'% sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
+```
+
+![img](./results/RSS-combind.png)
+
+可以看到，AR和MA模型具有几乎相同的RSS，但组合更好。 现在，剩下最后一步，即将这些值恢复到原始的比例。
+
+### 将预测值恢复到原始尺度
+
+由于组合模型给出了最好的结果，所以使用这个结果缩放到原来的值，看看在原始尺度下的预测效果。第一步是将预测结果存储为一个单独的时间序列并观察。
+
+```
+predictions_ARIMA_diff = pd.Series(results_ARIMA.fittedvalues, copy=True)
+print predictions_ARIMA_diff.head()
+```
+
+```
+Month
+1949-02-01    0.009580
+1949-03-01    0.017491
+1949-04-01    0.027670
+1949-05-01   -0.004521
+1949-06-01   -0.023889
+dtype: float64
+```
+
+序列式从1949-02-01开始，而不是第一个月。把滞后1和第一个元素之前没有任何东西可做差分。将差分转换为对数刻度的方法是将这些差分连续添加到基数上。 一个简单的方法是首先确定索引处的累积和，然后将其添加到基数。累和操作借助cumsum()函数：
+
+```
+predictions_ARIMA_diff_cumsum = predictions_ARIMA_diff.cumsum()
+print predictions_ARIMA_diff_cumsum.head()
+```
+
+```
+Month
+1949-02-01    0.009580
+1949-03-01    0.027071
+1949-04-01    0.054742
+1949-05-01    0.050221
+1949-06-01    0.026331
+dtype: float64
+```
+
+接下来把它与基数相加。为此，可以创建一个每个值为基数的一个序列。
+
+```
+predictions_ARIMA_log = pd.Series(ts_log.iloc[0], index=ts_log.index)
+predictions_ARIMA_log = predictions_ARIMA_log.add(predictions_ARIMA_diff_cumsum,fill_value=0)
+predictions_ARIMA_log.head()
+```
+
+这里的第一个元素是基数本身，并从其上累加值。最后一步是取指数并与原始序列进行比较。
+
+```
+predictions_ARIMA = np.exp(predictions_ARIMA_log)
+plt.plot(ts)
+plt.plot(predictions_ARIMA)
+plt.title('RMSE: %.4f'% np.sqrt(sum((predictions_ARIMA-ts)**2)/len(ts)))
+```
+
+![img](./results/MSE.png)
+
+最终我们在原始尺度上有一个简单的预测曲线。跟真实值对比看，容易发现这个曲线不是很好的预测结果.
+
+### 对未来的序列做出预测
+
+首先需要向时间序列DataFrame中加入新的时间索引。
+
+```
+from dateutil.relativedelta import relativedelta
+forecast = results_ARIMA.predict(start="1961-01-01", end="1962-12-01", dynamic= True)
+```
+
+### 恢复原始尺度并画图
+
+```
+forecast_ARIMA_diff = pd.Series(forecast, copy=True)
+forecast_ARIMA_diff = pd.concat([predictions_ARIMA_diff, forecast_ARIMA_diff])
+
+forecast_ARIMA_cumsum = forecast_ARIMA_diff.cumsum()
+forecast_ARIMA_log = pd.Series(ts_log.iloc[0], index=forecast_ARIMA_cumsum.index)
+forecast_ARIMA_log = forecast_ARIMA_log.add(forecast_ARIMA_cumsum,fill_value=0)
+forecast_ARIMA = np.exp(forecast_ARIMA_log)
+
+plt.plot(ts)
+plt.plot(forecast_ARIMA)
+plt.title('RMSE: %.4f'% np.sqrt(sum((forecast_ARIMA-ts)**2)/len(ts)))
+```
+
+![img](./results/RMSE-NAN.png)
 
