@@ -192,7 +192,7 @@ ts['1949']
 plt.plot(ts)
 ```
 
-![img](./results/stationary-serial.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/stationary-serial.png)
 
 
 **从图中观察得，随季节变化，数据总体呈上升趋势。然而，在大多数情况下我们并不能直接通过直接观察得出时间序列是否为平稳时间序列。所以，更严格地，我们可以使用以下方法来检验平稳性：**
@@ -235,7 +235,7 @@ def test_stationarity(timeseries):
 test_stationarity(ts)
 ```
 
-![img](./results/test-stationary-serial.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/test-stationary-serial.png)
 
 ```
 Results of Dickey-Fuller Test:
@@ -271,7 +271,7 @@ ts_log = np.log(ts)
 plt.plot(ts_log)
 ```
 
-![img](./results/log-trans.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/log-trans.png)
 
 在对数变换之后，很容易看到数据的向前的趋势，并且上升趋势程度降低了(相同时间段内纵坐标的变化值)。但是在噪音的存在下它不是很直观。可以使用一些技术来估计或模拟这种趋势，然后将其从系列中删除。 实现的方法有很多，最常用的有：
 
@@ -291,7 +291,7 @@ plt.plot(ts_log)
 plt.plot(moving_avg, color='red')
 ```
 
-![img](./results/mean-trans,png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/mean-trans.png)
 
 红线为滚动平均值。从原始序列(ts_log)中去掉这一部分。 由于取平均值为连续的12个值且作为最后一个时间点的值，所以最前面的11个时间点没有值：
 
@@ -319,7 +319,7 @@ ts_log_moving_avg_diff.dropna(inplace=True)
 test_stationarity(ts_log_moving_avg_diff)
 ```
 
-![img](./results/remove-NAN.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/remove-NAN.png)
 
 ```
 Results of Dickey-Fuller Test:
@@ -343,7 +343,7 @@ plt.plot(ts_log)
 plt.plot(expwighted_avg, color='red')
 ```
 
-![img](./results/weight.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/weight.png)
 
 这里使用参数“半衰期”halflife来定义指数衰减量。这是一个假设，在很大程度上取决于业务领域。其他参数如跨度span和质心com也可用于定义不同的权重衰减。现在从时间序列中删除指数加权移动平均并得到的结果序列的检验平稳性：
 
@@ -352,7 +352,7 @@ ts_log_ewma_diff = ts_log - expwighted_avg
 test_stationarity(ts_log_ewma_diff)
 ```
 
-![img](./results/remove-weight.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/remove-weight.png)
 
 ```
 Results of Dickey-Fuller Test:
@@ -384,7 +384,7 @@ ts_log_diff = ts_log - ts_log.shift()
 plt.plot(ts_log_diff)
 ```
 
-![img](./results/chafen.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/chafen.png)
 
 趋势性有所下降。平稳性：
 
@@ -393,7 +393,7 @@ ts_log_diff.dropna(inplace=True)
 test_stationarity(ts_log_diff)
 ```
 
-![img](./results/chafen-stationary.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/chafen-stationary.png)
 
 ```
 Results of Dickey-Fuller Test:
@@ -436,7 +436,7 @@ plt.legend(loc='best')
 plt.tight_layout()
 ```
 
-![img](./results/fenjie.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/fenjie.png)
 
 这里可以看出，包含趋势和周期性的部分被分解出来，从原始数据中的剩下的即为残差部分。可以对残差进行建模。现在来检验残差序列的平稳性：
 
@@ -447,7 +447,7 @@ ts_log_decompose.dropna(inplace=True)
 test_stationarity(ts_log_decompose)
 ```
 
-![img](./results/cancha-stationary.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/cancha-stationary.png)
 
 ```
 Results of Dickey-Fuller Test:
@@ -507,7 +507,7 @@ plt.title('Partial Autocorrelation Function')
 plt.tight_layout()
 ```
 
-![img](./results/chafen-xiangguan.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/chafen-xiangguan.png)
 
 ### 加载ARIMA模型
 
@@ -525,7 +525,7 @@ plt.plot(results_AR.fittedvalues, color='red')
 plt.title('RSS: %.4f'% sum((results_AR.fittedvalues-ts_log_diff)**2))
 ```
 
-![img](./results/RSS-AR.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/RSS-AR.png)
 
 #### MA 模型
 
@@ -537,7 +537,7 @@ plt.plot(results_MA.fittedvalues, color='red')
 plt.title('RSS: %.4f'% sum((results_MA.fittedvalues-ts_log_diff)**2))
 ```
 
-![img](./results/RSS-MA.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/RSS-MA.png)
 
 #### 组合模型
 
@@ -549,7 +549,7 @@ plt.plot(results_ARIMA.fittedvalues, color='red')
 plt.title('RSS: %.4f'% sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
 ```
 
-![img](./results/RSS-combind.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/RSS-combind.png)
 
 可以看到，AR和MA模型具有几乎相同的RSS，但组合更好。 现在，剩下最后一步，即将这些值恢复到原始的比例。
 
@@ -606,7 +606,7 @@ plt.plot(predictions_ARIMA)
 plt.title('RMSE: %.4f'% np.sqrt(sum((predictions_ARIMA-ts)**2)/len(ts)))
 ```
 
-![img](./results/MSE.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/MSE.png)
 
 最终我们在原始尺度上有一个简单的预测曲线。跟真实值对比看，容易发现这个曲线不是很好的预测结果.
 
@@ -635,5 +635,5 @@ plt.plot(forecast_ARIMA)
 plt.title('RMSE: %.4f'% np.sqrt(sum((forecast_ARIMA-ts)**2)/len(ts)))
 ```
 
-![img](./results/RMSE-NAN.png)
+![img](http://7xq5e8.com1.z0.glb.clouddn.com/pandas/20180717/RMSE-NAN.png)
 
