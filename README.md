@@ -438,3 +438,28 @@ plt.tight_layout()
 
 ![img](./results/fenjie.png)
 
+这里可以看出，包含趋势和周期性的部分被分解出来，从原始数据中的剩下的即为残差部分。可以对残差进行建模。现在来检验残差序列的平稳性：
+
+
+```
+ts_log_decompose = residual
+ts_log_decompose.dropna(inplace=True)
+test_stationarity(ts_log_decompose)
+```
+
+![img](./results/cancha-stationary.png)
+
+```
+Results of Dickey-Fuller Test:
+Test Statistic                -6.332387e+00
+p-value                        2.885059e-08
+#Lags Used                     9.000000e+00
+Number of Observations Used    1.220000e+02
+Critical Value (5%)           -2.885538e+00
+Critical Value (1%)           -3.485122e+00
+Critical Value (10%)          -2.579569e+00
+dtype: float64
+```
+
+Dickey-Fuller检验统计量显著低于1％临界值。所以这个时间序列非常接近平稳时间序列。 
+
